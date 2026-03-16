@@ -3,22 +3,44 @@ import cohere
 from dotenv import load_dotenv
 
 load_dotenv()
-co = cohere.Client(os.environ['COHERE_API_KEY'])
 
-# 参照させたいドキュメントを用意
+co = cohere.ClientV2(os.environ["COHERE_API_KEY"])
+
 documents = [
-    {"title": "会社概要", "snippet": "私たちはAIを活用したソフトウェア開発を行う企業です。2020年に設立されました。"},
-    {"title": "サービス", "snippet": "主なサービスはチャットボット開発、データ分析、AI導入支援です。"},
+    {
+        "data": {
+            "title": "会社概要",
+            "text": "私たちはAIを活用したソフトウェア開発を行う企業です。2020年に設立されました。"
+        }
+    },
+    {
+        "data": {
+            "title": "サービス",
+            "text": "主なサービスはチャットボット開発、データ分析、AI導入支援です。"
+        }
+    },
 ]
 
 response = co.chat(
-    model='command-a-03-2025',
-    message='この会社はどんなサービスを提供していますか？',
+    model="command-a-03-2025",
+    messages=[
+        {
+            "role": "system",
+            "content": "与えられた文書に基づいて回答してください。不明な点は推測せず不明と答えてください。"
+        },
+        {
+            "role": "user",
+            "content": "この会社はどんなサービスを提供していますか？"
+        }
+    ],
     documents=documents,
 )
 
-print(response.text)
+# 本文表示
+if response.message.content:
+    print(response.message.content[0].text)
 
-# 引用元も確認できる
-for citation in response.citations:
-    print(f"引用: {citation}")
+# citation 表示
+if getattr(response.message, "citations", None):
+    for citation in response.message.citations:
+        print(citation)
